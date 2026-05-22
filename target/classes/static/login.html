@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Employee Attendance Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            color: #666;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+            font-weight: 600;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            display: none;
+        }
+        .form-group.active {
+            display: block;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+            text-align: center;
+        }
+        .message.error {
+            background: #ffebee;
+            color: #c62828;
+            display: block;
+        }
+        .message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            display: block;
+        }
+        .demo-info {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Attendance Portal</h1>
+    <div class="demo-info">
+        <strong>Demo Credentials:</strong><br>
+        Admin: admin / admin123<br>
+        Employee: emp1 / emp123
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('login')">Login</div>
+        <div class="tab" onclick="switchTab('register')">Register</div>
+    </div>
+
+    <!-- Login Form -->
+    <div id="login-form" class="form-group active">
+        <label for="login-username">Username</label>
+        <input id="login-username" type="text" placeholder="Enter username">
+        <label for="login-password" style="margin-top: 15px;">Password</label>
+        <input id="login-password" type="password" placeholder="Enter password">
+        <button onclick="login()" style="margin-top: 20px;">Login</button>
+    </div>
+
+    <!-- Register Form -->
+    <div id="register-form" class="form-group">
+        <label for="register-fullname">Full Name</label>
+        <input id="register-fullname" type="text" placeholder="Enter full name">
+        <label for="register-username" style="margin-top: 15px;">Username</label>
+        <input id="register-username" type="text" placeholder="Enter username">
+        <label for="register-email" style="margin-top: 15px;">Email</label>
+        <input id="register-email" type="email" placeholder="Enter email">
+        <label for="register-password" style="margin-top: 15px;">Password</label>
+        <input id="register-password" type="password" placeholder="Enter password">
+        <button onclick="register()" style="margin-top: 20px;">Register</button>
+    </div>
+
+    <div id="message" class="message"></div>
+</div>
+
+<script>
+    function switchTab(tab) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.form-group').forEach(f => f.classList.remove('active'));
+
+        if (tab === 'login') {
+            document.querySelectorAll('.tab')[0].classList.add('active');
+            document.getElementById('login-form').classList.add('active');
+        } else {
+            document.querySelectorAll('.tab')[1].classList.add('active');
+            document.getElementById('register-form').classList.add('active');
+        }
+        clearMessage();
+    }
+
+    function showMessage(text, isError = false) {
+        const msg = document.getElementById('message');
+        msg.textContent = text;
+        msg.className = 'message ' + (isError ? 'error' : 'success');
+    }
+
+    function clearMessage() {
+        document.getElementById('message').className = 'message';
+    }
+
+    async function login() {
+        const username = document.getElementById('login-username').value.trim();
+        const password = document.getElementById('login-password').value;
+
+        if (!username || !password) {
+            showMessage('Please fill in all fields.', true);
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                showMessage(data.error || 'Login failed.', true);
+                return;
+            }
+
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data));
+            console.log("data:"+JSON.stringify(data));
+
+            const isAdmin = data.roles.some(r => r.name === 'ROLE_ADMIN');
+            if (isAdmin) {
+                window.location.href = '/admin.html';
+            } else {
+            	console.log(data)
+                window.location.href = '/index.html';
+            }
+        } catch (error) {
+            showMessage('An error occurred: ' + error.message, true);
+        }
+    }
+
+    async function register() {
+        const fullName = document.getElementById('register-fullname').value.trim();
+        const username = document.getElementById('register-username').value.trim();
+        const email = document.getElementById('register-email').value.trim();
+        const password = document.getElementById('register-password').value;
+
+        if (!fullName || !username || !email || !password) {
+            showMessage('Please fill in all fields.', true);
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fullName, username, email, password })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                showMessage(data.error || 'Registration failed.', true);
+                return;
+            }
+
+            showMessage('Registration successful! Please login.');
+            setTimeout(() => {
+                switchTab('login');
+                document.getElementById('login-username').value = username;
+                document.getElementById('login-password').value = password;
+            }, 1500);
+        } catch (error) {
+            showMessage('An error occurred: ' + error.message, true);
+        }
+    }
+
+    document.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const loginForm = document.getElementById('login-form');
+            if (loginForm.classList.contains('active')) {
+                login();
+            } else {
+                register();
+            }
+        }
+    });
+</script>
+</body>
+</html>

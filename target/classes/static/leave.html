@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leave Requests - Attendance Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f4f7ff;
+            min-height: 100vh;
+        }
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 18px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logout-btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s ease;
+        }
+        .logout-btn:hover {
+            background: #eef1ff;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 0 20px 40px;
+        }
+        .hero {
+            margin-bottom: 24px;
+            padding: 28px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.1);
+        }
+        .hero h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #1d2466;
+        }
+        .hero p {
+            color: #5d658b;
+            line-height: 1.7;
+        }
+        .dashboard-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        }
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(99, 92, 255, 0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 40px rgba(99, 92, 255, 0.12);
+        }
+        .card h2 {
+            color: #2b3674;
+            margin-bottom: 10px;
+            font-size: 1.25rem;
+        }
+        .card p {
+            color: #606a8d;
+            line-height: 1.6;
+        }
+        .card span {
+            display: inline-block;
+            margin-top: 18px;
+            color: #667eea;
+            font-weight: 700;
+        }
+        .apply-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 24px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 24px;
+            transition: background 0.2s ease;
+        }
+        .apply-btn:hover {
+            background: #5568d3;
+        }
+        .leave-balance {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            margin-top: 20px;
+        }
+        .balance-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .balance-card h3 {
+            margin-bottom: 12px;
+            color: #333;
+        }
+        .balance-card .value {
+            font-size: 2.4rem;
+            color: #667eea;
+            font-weight: 700;
+        }
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal {
+            width: 100%;
+            max-width: 520px;
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+        }
+        .modal h2 {
+            margin-bottom: 18px;
+            color: #2b3674;
+        }
+        .modal label {
+            display: block;
+            margin-top: 14px;
+            color: #4e557a;
+            font-weight: 600;
+        }
+        .modal input,
+        .modal select,
+        .modal textarea {
+            width: 100%;
+            padding: 12px 14px;
+            margin-top: 8px;
+            border: 1px solid #d9dde8;
+            border-radius: 10px;
+            font-size: 0.98rem;
+            color: #2b3674;
+        }
+        .modal textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .modal-actions {
+            margin-top: 22px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .modal-actions button {
+            flex: 1;
+            min-width: 140px;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .submit-btn {
+            background: #667eea;
+            color: white;
+        }
+        .cancel-btn {
+            background: #eef1ff;
+            color: #33418a;
+        }
+        .message {
+            margin-top: 18px;
+            padding: 14px 18px;
+            border-radius: 12px;
+            display: none;
+        }
+        .message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .message.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div>
+        <h1>Attendance Portal</h1>
+    </div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+</header>
+<div class="container">
+    <section class="hero">
+        <h1>Leave Requests</h1>
+        <p>Manage your leave balance and submit a new leave request for sick, casual, or paid leave.</p>
+        <a class="back-link" href="/index.html">← Back to Dashboard</a>
+    </section>
+
+    <div class="leave-balance">
+        <div class="balance-card">
+            <h3>Sick Leaves</h3>
+            <div class="value" id="sickLeaves">6</div>
+        </div>
+        <div class="balance-card">
+            <h3>Casual Leaves</h3>
+            <div class="value" id="casualLeaves">12</div>
+        </div>
+        <div class="balance-card">
+            <h3>Paid Leaves</h3>
+            <div class="value" id="paidLeaves">18</div>
+        </div>
+    </div>
+
+    <button class="apply-btn" onclick="openLeaveModal()">Apply Leave</button>
+    <div id="message" class="message"></div>
+</div>
+
+<div id="leaveModal" class="modal-backdrop" style="display:none;">
+    <div class="modal">
+        <h2>Apply for Leave</h2>
+        <label for="leaveType">Leave Type</label>
+        <select id="leaveType">
+            <option value="casual">Casual Leave</option>
+            <option value="sick">Sick Leave</option>
+            <option value="paid">Paid Leave</option>
+        </select>
+        <label for="fromDate">From Date</label>
+        <input type="date" id="fromDate">
+        <label for="toDate">To Date</label>
+        <input type="date" id="toDate">
+        <label for="reason">Reason for Leave</label>
+        <textarea id="reason" placeholder="Enter leave reason..."></textarea>
+        <div class="modal-actions">
+            <button class="submit-btn" onclick="submitLeaveRequest()">Submit Leave</button>
+            <button class="cancel-btn" onclick="closeLeaveModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="leaveRequests" style="margin-top: 30px;">
+    <h2>Your Leave Requests</h2>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+        <thead>
+            <tr>
+                <th style="border: 1px solid #ddd; padding: 8px;">Leave Type</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">From</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">To</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">Status</th>
+            </tr>
+        </thead>
+        <tbody id="leaveRequestsTable">
+            <!-- Leave requests will be dynamically inserted here -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user'));
+
+    if (!token || !user) {
+        window.location.href = '/login.html';
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login.html';
+    }
+
+    function openLeaveModal() {
+        document.getElementById('leaveModal').style.display = 'flex';
+        document.getElementById('message').style.display = 'none';
+    }
+
+    function closeLeaveModal() {
+        document.getElementById('leaveModal').style.display = 'none';
+    }
+
+    
+    async function submitLeaveRequest() {
+
+    const type = document.getElementById('leaveType').value;
+    const fromDate = document.getElementById('fromDate').value;
+    const toDate = document.getElementById('toDate').value;
+    const reason = document.getElementById('reason').value.trim();
+
+    const messageEl = document.getElementById('message');
+
+    if (!fromDate || !toDate || !reason) {
+        messageEl.textContent =
+            'Please fill in all leave details.';
+        messageEl.className = 'message error';
+        messageEl.style.display = 'block';
+        return;
+    }
+
+    try {
+
+        const response = await fetch('/api/leaves/request', {
+
+            method: 'POST',
+
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+
+            body: JSON.stringify({
+                userId: user.userId,
+                leaveCategory: type,
+                startDate: fromDate,
+                endDate: toDate,
+                reason: reason
+            })
+        });
+
+        if (response.ok) {
+
+            const data = await response.json();
+
+            messageEl.textContent =
+                'Leave request submitted successfully';
+
+            messageEl.className = 'message success';
+            messageEl.style.display = 'block';
+			
+            closeLeaveModal();
+
+            fetchLeaveRequests();
+
+            console.log(data);
+
+        } else {
+
+            messageEl.textContent =
+                'Failed to submit leave request';
+
+            messageEl.className = 'message error';
+            messageEl.style.display = 'block';
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
+        messageEl.textContent =
+            'Server error occurred';
+
+        messageEl.className = 'message error';
+        messageEl.style.display = 'block';
+    }
+
+
+        closeLeaveModal();
+        messageEl.textContent = `Leave request sent: ${type.charAt(0).toUpperCase() + type.slice(1)} leave from ${fromDate} to ${toDate}.`;
+        messageEl.className = 'message success';
+        messageEl.style.display = 'block';
+        document.getElementById('fromDate').value = '';
+        document.getElementById('toDate').value = '';
+        document.getElementById('reason').value = '';
+        document.getElementById('leaveType').value = 'casual';
+    }
+
+    async function fetchLeaveRequests() {
+        console.log (user.userId);
+        const response = await fetch(`/api/leaves/user/${user.userId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const leaveRequests = await response.json();
+            const tableBody = document.getElementById('leaveRequestsTable');
+            tableBody.innerHTML = '';
+
+            leaveRequests.forEach(request => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style='border: 1px solid #ddd; padding: 8px;'>${request.leaveCategory}</td>
+                    <td style='border: 1px solid #ddd; padding: 8px;'>${request.startDate}</td>
+                    <td style='border: 1px solid #ddd; padding: 8px;'>${request.endDate}</td>
+                    <td style='border: 1px solid #ddd; padding: 8px;'>${request.status}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        } else {
+            console.error('Failed to fetch leave requests');
+        }
+    }
+
+    // Fetch leave requests on page load
+    fetchLeaveRequests();
+</script>
+</body>
+</html>
