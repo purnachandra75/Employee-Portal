@@ -6,6 +6,7 @@ import com.example.attendance.repository.RoleRepository;
 import com.example.attendance.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -20,9 +21,10 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private UserRepository userRepository;
 
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
     @Override
     public void run(String... args) throws Exception {
-        // Initialize Roles
         if (roleRepository.findByName(Role.RoleType.ROLE_ADMIN).isEmpty()) {
             roleRepository.save(new Role(Role.RoleType.ROLE_ADMIN));
         }
@@ -31,11 +33,10 @@ public class DataInitializer implements CommandLineRunner {
             roleRepository.save(new Role(Role.RoleType.ROLE_EMPLOYEE));
         }
 
-        // Create default admin user
         if (!userRepository.existsByUsername("admin")) {
             User admin = new User(
                     "admin",
-                    "admin123",
+                    passwordEncoder.encode("admin123"),
                     "admin@company.com",
                     "Admin User"
             );
@@ -47,11 +48,10 @@ public class DataInitializer implements CommandLineRunner {
             userRepository.save(admin);
         }
 
-        // Create default employee users
         if (!userRepository.existsByUsername("emp1")) {
             User emp1 = new User(
                     "emp1",
-                    "emp123",
+                    passwordEncoder.encode("emp123"),
                     "emp1@company.com",
                     "John Doe"
             );
@@ -66,7 +66,7 @@ public class DataInitializer implements CommandLineRunner {
         if (!userRepository.existsByUsername("emp2")) {
             User emp2 = new User(
                     "emp2",
-                    "emp123",
+                    passwordEncoder.encode("emp123"),
                     "emp2@company.com",
                     "Jane Smith"
             );

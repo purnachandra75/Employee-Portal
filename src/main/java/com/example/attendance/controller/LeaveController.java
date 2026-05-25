@@ -1,5 +1,6 @@
 package com.example.attendance.controller;
 
+import com.example.attendance.dto.LeaveRequestDto;
 import com.example.attendance.model.LeaveRequest;
 import com.example.attendance.model.User;
 import com.example.attendance.service.LeaveService;
@@ -8,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/leaves")
@@ -17,17 +19,19 @@ public class LeaveController {
     private LeaveService leaveService;
 
     @PostMapping("/request")
-    public ResponseEntity<LeaveRequest> createLeaveRequest(@RequestParam Long userId, @RequestBody LeaveRequest leaveRequest) {
-        // Fetch the user by userId
-        User user = leaveService.getUserById(userId);
+    public ResponseEntity<LeaveRequest> createLeaveRequest(@RequestBody LeaveRequestDto leaveRequestDto) {
+        User user = leaveService.getUserById(leaveRequestDto.getUserId());
         if (user == null) {
-            return ResponseEntity.status(404).body(null); // Not Found if user does not exist
+            return ResponseEntity.notFound().build();
         }
 
-        // Associate the user with the leave request
+        LeaveRequest leaveRequest = new LeaveRequest();
         leaveRequest.setUser(user);
+        leaveRequest.setLeaveCategory(leaveRequestDto.getLeaveCategory());
+        leaveRequest.setStartDate(LocalDate.parse(leaveRequestDto.getStartDate()));
+        leaveRequest.setEndDate(LocalDate.parse(leaveRequestDto.getEndDate()));
+        leaveRequest.setReason(leaveRequestDto.getReason());
 
-        // Save the leave request
         LeaveRequest createdLeaveRequest = leaveService.createLeaveRequest(leaveRequest);
         return ResponseEntity.ok(createdLeaveRequest);
     }

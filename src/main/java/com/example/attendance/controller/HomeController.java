@@ -1,5 +1,6 @@
 package com.example.attendance.controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -29,5 +30,10 @@ public class HomeController {
     @GetMapping("/error")
     public String error() {
         return "forward:/login.html";
+    }
+
+    @GetMapping("/favicon.ico")
+    public ResponseEntity<Void> favicon() {
+        return ResponseEntity.noContent().build();
     }
 }

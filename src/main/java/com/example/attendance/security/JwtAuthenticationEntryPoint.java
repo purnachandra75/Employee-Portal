@@ -1,4 +1,4 @@
 package com.example.attendance.security;
 
-public class JwtTokenProvider {
+public class JwtAuthenticationEntryPoint {
 }

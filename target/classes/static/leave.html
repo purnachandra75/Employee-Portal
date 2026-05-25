@@ -290,8 +290,9 @@
 <script>
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user'));
+    const userId = user?.userId ?? user?.id;
 
-    if (!token || !user) {
+    if (!token || !user || !userId) {
         window.location.href = '/login.html';
     }
 
@@ -329,18 +330,14 @@
     }
 
     try {
-
         const response = await fetch('/api/leaves/request', {
-
             method: 'POST',
-
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-
             body: JSON.stringify({
-                userId: user.userId,
+                userId: userId,
                 leaveCategory: type,
                 startDate: fromDate,
                 endDate: toDate,
@@ -349,55 +346,35 @@
         });
 
         if (response.ok) {
-
-            const data = await response.json();
-
+            await response.json();
             messageEl.textContent =
                 'Leave request submitted successfully';
-
             messageEl.className = 'message success';
             messageEl.style.display = 'block';
-			
             closeLeaveModal();
-
             fetchLeaveRequests();
-
-            console.log(data);
-
+            document.getElementById('fromDate').value = '';
+            document.getElementById('toDate').value = '';
+            document.getElementById('reason').value = '';
+            document.getElementById('leaveType').value = 'casual';
         } else {
-
             messageEl.textContent =
                 'Failed to submit leave request';
-
             messageEl.className = 'message error';
             messageEl.style.display = 'block';
         }
-
     } catch (error) {
-
         console.error(error);
-
         messageEl.textContent =
             'Server error occurred';
-
         messageEl.className = 'message error';
         messageEl.style.display = 'block';
     }
-
-
-        closeLeaveModal();
-        messageEl.textContent = `Leave request sent: ${type.charAt(0).toUpperCase() + type.slice(1)} leave from ${fromDate} to ${toDate}.`;
-        messageEl.className = 'message success';
-        messageEl.style.display = 'block';
-        document.getElementById('fromDate').value = '';
-        document.getElementById('toDate').value = '';
-        document.getElementById('reason').value = '';
-        document.getElementById('leaveType').value = 'casual';
     }
 
     async function fetchLeaveRequests() {
-        console.log (user.userId);
-        const response = await fetch(`/api/leaves/user/${user.userId}`, {
+        console.log(userId);
+        const response = await fetch(`/api/leaves/user/${encodeURIComponent(userId)}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }

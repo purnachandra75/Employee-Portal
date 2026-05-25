@@ -4,8 +4,6 @@ import com.example.attendance.model.DocumentSubmission;
 import com.example.attendance.model.User;
 import com.example.attendance.repository.DocumentSubmissionRepository;
 import com.example.attendance.repository.UserRepository;
-import com.example.attendance.security.JwtTokenProvider;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -35,11 +33,8 @@ public class DocumentController {
     @Autowired
     private DocumentSubmissionRepository documentSubmissionRepository;
 
-    @Autowired
-    private JwtTokenProvider tokenProvider;
-
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> uploadDocuments(HttpServletRequest request,
+    public ResponseEntity<?> uploadDocuments(@RequestParam String username,
                                              @RequestParam("tenth") MultipartFile tenth,
                                              @RequestParam("twelfth") MultipartFile twelfth,
                                              @RequestParam("pc") MultipartFile pc,
@@ -48,11 +43,6 @@ public class DocumentController {
                                              @RequestParam("aadhaar") MultipartFile aadhaar,
                                              @RequestParam("resume") MultipartFile resume,
                                              @RequestParam("passport") MultipartFile passport) throws IOException {
-        String username = getUsernameFromRequest(request);
-        if (username == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
-        }
-
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -103,12 +93,7 @@ public class DocumentController {
     }
 
     @GetMapping("/my-files")
-    public ResponseEntity<?> getMyFiles(HttpServletRequest request) {
-        String username = getUsernameFromRequest(request);
-        if (username == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
-        }
-
+    public ResponseEntity<?> getMyFiles(@RequestParam String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -136,14 +121,7 @@ public class DocumentController {
     }
 
     @GetMapping("/employee/{employeeId}/files")
-    public ResponseEntity<?> getEmployeeFiles(HttpServletRequest request, @PathVariable Long employeeId) {
-        String username = getUsernameFromRequest(request);
-        if (username == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
-        }
-
-        User requestingUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public ResponseEntity<?> getEmployeeFiles(@PathVariable Long employeeId) {
 
         Optional<DocumentSubmission> optionalSubmission = documentSubmissionRepository.findByUserId(employeeId);
         List<Map<String, Object>> documents = new ArrayList<>();
@@ -213,14 +191,7 @@ public class DocumentController {
     }
 
     @GetMapping("/employee/{employeeId}/download/{field}")
-    public ResponseEntity<Resource> downloadEmployeeDocument(HttpServletRequest request, @PathVariable Long employeeId, @PathVariable String field) {
-        String username = getUsernameFromRequest(request);
-        if (username == null) {
-            return ResponseEntity.status(401).build();
-        }
-
-        User requestingUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public ResponseEntity<Resource> downloadEmployeeDocument(@PathVariable Long employeeId, @PathVariable String field) {
 
         DocumentSubmission submission = documentSubmissionRepository.findByUserId(employeeId)
                 .orElseThrow(() -> new RuntimeException("No documents found"));
@@ -249,12 +220,7 @@ public class DocumentController {
     }
 
     @GetMapping("/download/{field}")
-    public ResponseEntity<Resource> downloadDocument(HttpServletRequest request, @PathVariable String field) {
-        String username = getUsernameFromRequest(request);
-        if (username == null) {
-            return ResponseEntity.status(401).build();
-        }
-
+    public ResponseEntity<Resource> downloadDocument(@RequestParam String username, @PathVariable String field) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -282,18 +248,6 @@ public class DocumentController {
                 .contentType(mediaType)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
                 .body(resource);
-    }
-
-    private String getUsernameFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
-            return null;
-        }
-        String token = bearerToken.substring(7);
-        if (!tokenProvider.validateToken(token)) {
-            return null;
-        }
-        return tokenProvider.getUsernameFromToken(token);
     }
 
     private byte[] getDataForField(String field, DocumentSubmission submission) {

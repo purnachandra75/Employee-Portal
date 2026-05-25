@@ -13,6 +13,9 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        <script>
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user'));
             background: #eef2ff;
             min-height: 100vh;
         }
@@ -93,7 +96,6 @@
             background: #667eea;
             color: white;
             border: none;
-            border-radius: 10px;
             padding: 14px 24px;
             font-size: 15px;
             cursor: pointer;
@@ -157,11 +159,11 @@
                     <input id="twelfth" name="twelfth" type="file" accept="application/pdf,image/*" required>
                 </div>
                 <div class="form-group">
-                    <label for="pc">PC (Police Clearance / Other Certificate)</label>
+                    <label for="pc">PC </label>
                     <input id="pc" name="pc" type="file" accept="application/pdf,image/*" required>
                 </div>
                 <div class="form-group">
-                    <label for="od">OD (Offer Document / Other Document)</label>
+                    <label for="od">OD</label>
                     <input id="od" name="od" type="file" accept="application/pdf,image/*" required>
                 </div>
                 <div class="form-group">
@@ -191,8 +193,9 @@
 <script>
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user'));
+    const username = user?.username ? encodeURIComponent(user.username) : null;
 
-    if (!token || !user) {
+    if (!token || !user || !username) {
         window.location.href = '/login.html';
     }
 
@@ -263,7 +266,7 @@
 
     async function downloadDocument(field, filename) {
         try {
-            const response = await fetch(`/api/documents/download/${field}`, {
+            const response = await fetch(`/api/documents/download/${field}?username=${username}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -284,7 +287,7 @@
 
     async function loadUserDocuments() {
         try {
-            const response = await fetch('/api/documents/my-files', {
+            const response = await fetch(`/api/documents/my-files?username=${username}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -346,6 +349,7 @@
         }
 
         const formData = new FormData(documentForm);
+        formData.append('username', user.username);
 
         try {
             const response = await fetch('/api/documents/upload', {
