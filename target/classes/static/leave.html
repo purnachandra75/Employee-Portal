@@ -288,18 +288,87 @@
 </div>
 
 <script>
+    function hasAdminRole(roles) {
+        if (!Array.isArray(roles)) return false;
+        return roles.some(r => {
+            if (!r) return false;
+            if (typeof r === 'string') return r === 'ROLE_ADMIN';
+            if (typeof r === 'object') return (r.name === 'ROLE_ADMIN' || r.role === 'ROLE_ADMIN' || r.authority === 'ROLE_ADMIN');
+            return false;
+        });
+    }
+
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user'));
     const userId = user?.userId ?? user?.id;
+    const isAdmin = hasAdminRole(user?.roles);
+    let leaveRequests = [];
 
     if (!token || !user || !userId) {
         window.location.href = '/login.html';
+    }
+
+    if (isAdmin) {
+        window.location.href = '/admin.html';
     }
 
     function logout() {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login.html';
+    }
+
+    function calculateLeaveDays(startDate, endDate) {
+        if (!startDate || !endDate) return 0;
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        if (end < start) return 0;
+        return Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    }
+
+    function getAllowance(category) {
+        switch (category.toLowerCase()) {
+            case 'sick': return 6;
+            case 'casual': return 12;
+            case 'paid': return 18;
+            default: return 0;
+        }
+    }
+
+    function getApprovedDays(category) {
+        return leaveRequests.filter(lr => lr.status && lr.status.toUpperCase() === 'APPROVED' && lr.leaveCategory && lr.leaveCategory.toLowerCase() === category.toLowerCase())
+            .reduce((sum, lr) => {
+                const days = calculateLeaveDays(lr.startDate, lr.endDate);
+                return sum + days;
+            }, 0);
+    }
+
+    function getRemainingDays(category) {
+        return Math.max(0, getAllowance(category) - getApprovedDays(category));
+    }
+
+    function updateLeaveBalances(requests) {
+        leaveRequests = requests || [];
+        document.getElementById('sickLeaves').textContent = getRemainingDays('sick');
+        document.getElementById('casualLeaves').textContent = getRemainingDays('casual');
+        document.getElementById('paidLeaves').textContent = getRemainingDays('paid');
+    }
+
+    function getCategoryDisplayName(category) {
+        switch (category.toLowerCase()) {
+            case 'sick': return 'Sick';
+            case 'casual': return 'Casual';
+            case 'paid': return 'Paid';
+            default: return category;
+        }
+    }
+
+    function showLeaveAlert(message) {
+        const messageEl = document.getElementById('message');
+        messageEl.textContent = message;
+        messageEl.className = 'message error';
+        messageEl.style.display = 'block';
+        window.alert(message);
     }
 
     function openLeaveModal() {
@@ -311,7 +380,6 @@
         document.getElementById('leaveModal').style.display = 'none';
     }
 
-    
     async function submitLeaveRequest() {
 
     const type = document.getElementById('leaveType').value;
@@ -322,10 +390,21 @@
     const messageEl = document.getElementById('message');
 
     if (!fromDate || !toDate || !reason) {
-        messageEl.textContent =
-            'Please fill in all leave details.';
-        messageEl.className = 'message error';
-        messageEl.style.display = 'block';
+        showLeaveAlert('Please fill in all leave details.');
+        return;
+    }
+
+    const requestedDays = calculateLeaveDays(fromDate, toDate);
+    if (requestedDays <= 0) {
+        showLeaveAlert('Leave end date must be the same or after the start date.');
+        return;
+    }
+
+    const remainingDays = getRemainingDays(type);
+    if (requestedDays > remainingDays) {
+        showLeaveAlert(
+            `Cannot apply for ${requestedDays} days of ${getCategoryDisplayName(type)} leave. Only ${remainingDays} day(s) are currently available.`
+        );
         return;
     }
 
@@ -381,11 +460,17 @@
         });
 
         if (response.ok) {
-            const leaveRequests = await response.json();
+            const leaveRequestsData = await response.json();
+            updateLeaveBalances(leaveRequestsData);
             const tableBody = document.getElementById('leaveRequestsTable');
             tableBody.innerHTML = '';
 
-            leaveRequests.forEach(request => {
+            if (!leaveRequestsData || leaveRequestsData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align:center; color:#999;">No leave requests found</td></tr>';
+                return;
+            }
+
+            leaveRequestsData.forEach(request => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td style='border: 1px solid #ddd; padding: 8px;'>${request.leaveCategory}</td>

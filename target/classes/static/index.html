@@ -162,11 +162,26 @@
 </div>
 
 <script>
+    function hasAdminRole(roles) {
+        if (!Array.isArray(roles)) return false;
+        return roles.some(r => {
+            if (!r) return false;
+            if (typeof r === 'string') return r === 'ROLE_ADMIN';
+            if (typeof r === 'object') return (r.name === 'ROLE_ADMIN' || r.role === 'ROLE_ADMIN' || r.authority === 'ROLE_ADMIN');
+            return false;
+        });
+    }
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user'));
-	console.log(JSON.parse(localStorage.getItem('user')));
+    console.log(JSON.parse(localStorage.getItem('user')));
     if (!token || !user) {
         window.location.href = '/login.html';
+    }
+
+    // Redirect admins to admin dashboard
+    const isAdmin = hasAdminRole(user?.roles);
+    if (isAdmin) {
+        window.location.href = '/admin.html';
     }
 
     document.getElementById('userGreeting').textContent = `Welcome, ${user.fullName || user.username}`;

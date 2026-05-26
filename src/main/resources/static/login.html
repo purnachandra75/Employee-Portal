@@ -154,6 +154,15 @@
 </div>
 
 <script>
+    function hasAdminRole(roles) {
+        if (!Array.isArray(roles)) return false;
+        return roles.some(r => {
+            if (!r) return false;
+            if (typeof r === 'string') return r === 'ROLE_ADMIN';
+            if (typeof r === 'object') return (r.name === 'ROLE_ADMIN' || r.role === 'ROLE_ADMIN' || r.authority === 'ROLE_ADMIN');
+            return false;
+        });
+    }
     function switchTab(tab) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.form-group').forEach(f => f.classList.remove('active'));
@@ -205,13 +214,8 @@
             localStorage.setItem('user', JSON.stringify(data));
             console.log("data:"+JSON.stringify(data));
 
-            const isAdmin = data.roles.some(r => r.name === 'ROLE_ADMIN');
-            if (isAdmin) {
-                window.location.href = '/admin.html';
-            } else {
-            	console.log(data)
-                window.location.href = '/index.html';
-            }
+            const isAdmin = hasAdminRole(data.roles);
+            window.location.href = isAdmin ? '/admin.html' : '/index.html';
         } catch (error) {
             showMessage('An error occurred: ' + error.message, true);
         }

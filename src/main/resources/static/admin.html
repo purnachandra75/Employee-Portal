@@ -234,6 +234,7 @@
         .modal-actions .close-btn {
             background: #eef1ff;
             color: #33418a;
+            
         }
     </style>
 </head>
@@ -422,11 +423,27 @@
 </div>
 
 <script>
+    function hasAdminRole(roles) {
+        if (!Array.isArray(roles)) return false;
+        return roles.some(r => {
+            if (!r) return false;
+            if (typeof r === 'string') return r === 'ROLE_ADMIN';
+            if (typeof r === 'object') return (r.name === 'ROLE_ADMIN' || r.role === 'ROLE_ADMIN' || r.authority === 'ROLE_ADMIN');
+            return false;
+        });
+    }
+
     let token = localStorage.getItem('token');
     let user = JSON.parse(localStorage.getItem('user'));
+    let username = user?.username || null;
+    let isAdmin = hasAdminRole(user?.roles);
 
-    if (!token || !user) {
+    if (!token || !user || !username) {
         window.location.href = '/login.html';
+    }
+
+    if (!isAdmin) {
+        window.location.href = '/index.html';
     }
 
     let allEmployees = [];
@@ -475,7 +492,7 @@
 
     async function loadStatistics() {
         try {
-            const response = await fetch('/api/admin/statistics', {
+            const response = await fetch(`/api/admin/statistics?username=${username}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -494,7 +511,7 @@
 
     async function loadEmployees() {
         try {
-            const response = await fetch('/api/admin/all-employees', {
+            const response = await fetch(`/api/admin/all-employees?username=${username}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -510,7 +527,7 @@
 
     async function loadDocumentEmployees() {
         try {
-            const response = await fetch('/api/admin/all-employees-with-doc-status', {
+            const response = await fetch(`/api/admin/all-employees-with-doc-status?username=${username}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -614,7 +631,7 @@
 
     async function viewEmployeeRecords(employeeId, employeeName) {
         try {
-            const response = await fetch(`/api/admin/employee/${employeeId}/records`, {
+            const response = await fetch(`/api/admin/employee/${employeeId}/records?username=${username}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -843,7 +860,18 @@
                 method: 'PUT',
                 headers: token ? { 'Authorization': `Bearer ${token}` } : {}
             });
-            if (!response.ok) throw new Error('Failed to update leave status');
+
+            if (!response.ok) {
+                let errorMessage = 'Failed to update leave status';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorData.error || errorMessage;
+                } catch (jsonError) {
+                    const text = await response.text();
+                    if (text) errorMessage = text;
+                }
+                throw new Error(errorMessage);
+            }
 
             const leave = await response.json();
             document.getElementById('leaveDetailStatus').textContent = leave.status;
@@ -851,7 +879,7 @@
             await loadLeaves();
         } catch (error) {
             console.error('Error:', error);
-            showMessage('Unable to update leave status', true);
+            showMessage(error.message || 'Unable to update leave status', true);
         }
     }
 
@@ -864,7 +892,7 @@
 
     async function loadAllRecords() {
         try {
-            const response = await fetch('/api/admin/all-records', {
+            const response = await fetch(`/api/admin/all-records?username=${username}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 

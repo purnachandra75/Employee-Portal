@@ -5,6 +5,7 @@ import com.example.attendance.model.User;
 import com.example.attendance.repository.AttendanceRepository;
 import com.example.attendance.repository.DocumentSubmissionRepository;
 import com.example.attendance.repository.UserRepository;
+import com.example.attendance.service.AuthorizationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,8 +29,12 @@ public class AdminController {
     @Autowired
     private DocumentSubmissionRepository documentSubmissionRepository;
 
+    @Autowired
+    private AuthorizationService authorizationService;
+
     @GetMapping("/all-records")
-    public ResponseEntity<?> getAllRecords() {
+    public ResponseEntity<?> getAllRecords(@RequestParam String username) {
+        authorizationService.requireAdmin(username);
         List<AttendanceRecord> records = attendanceRepository.findAllOrderByLoginTime();
         List<Map<String, Object>> response = records.stream()
                 .map(this::toAttendanceRecordDto)
@@ -38,7 +43,8 @@ public class AdminController {
     }
 
     @GetMapping("/employee/{employeeId}/records")
-    public ResponseEntity<?> getEmployeeRecords(@PathVariable Long employeeId) {
+    public ResponseEntity<?> getEmployeeRecords(@RequestParam String username, @PathVariable Long employeeId) {
+        authorizationService.requireAdmin(username);
         User employee = userRepository.findById(employeeId)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
@@ -78,15 +84,18 @@ public class AdminController {
     }
 
     @GetMapping("/all-employees")
-    public ResponseEntity<?> getAllEmployees() {
+    public ResponseEntity<?> getAllEmployees(@RequestParam String username) {
+        authorizationService.requireAdmin(username);
         List<User> employees = userRepository.findAll();
         return ResponseEntity.ok(employees);
     }
 
     @GetMapping("/all-employees-with-doc-status")
-    public ResponseEntity<?> getAllEmployeesWithDocStatus() {
+    public ResponseEntity<?> getAllEmployeesWithDocStatus(@RequestParam String username) {
+        authorizationService.requireAdmin(username);
         List<User> employees = userRepository.findAll();
         List<Map<String, Object>> response = new ArrayList<>();
+       
 
         for (User employee : employees) {
             boolean hasSubmission = documentSubmissionRepository.findByUserId(employee.getId()).isPresent();
@@ -103,7 +112,8 @@ public class AdminController {
     }
 
     @GetMapping("/statistics")
-    public ResponseEntity<?> getStatistics() {
+    public ResponseEntity<?> getStatistics(@RequestParam String username) {
+        authorizationService.requireAdmin(username);
         List<AttendanceRecord> allRecords = attendanceRepository.findAllOrderByLoginTime();
 
         long totalRecords = allRecords.size();

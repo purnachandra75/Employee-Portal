@@ -39,6 +39,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(Map.of("error", "Missing required parameter: " + parameterName));
     }
 
+    @ExceptionHandler(com.example.attendance.exception.ForbiddenException.class)
+    public ResponseEntity<Map<String, String>> handleForbidden(com.example.attendance.exception.ForbiddenException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleException(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "An unexpected error occurred."));

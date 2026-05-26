@@ -13,9 +13,6 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        <script>
-            const token = localStorage.getItem('token');
-            const user = JSON.parse(localStorage.getItem('user'));
             background: #eef2ff;
             min-height: 100vh;
         }
@@ -191,12 +188,27 @@
 </div>
 
 <script>
+    function hasAdminRole(roles) {
+        if (!Array.isArray(roles)) return false;
+        return roles.some(r => {
+            if (!r) return false;
+            if (typeof r === 'string') return r === 'ROLE_ADMIN';
+            if (typeof r === 'object') return (r.name === 'ROLE_ADMIN' || r.role === 'ROLE_ADMIN' || r.authority === 'ROLE_ADMIN');
+            return false;
+        });
+    }
+
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user'));
     const username = user?.username ? encodeURIComponent(user.username) : null;
+    const isAdmin = hasAdminRole(user?.roles);
 
     if (!token || !user || !username) {
         window.location.href = '/login.html';
+    }
+
+    if (isAdmin) {
+        window.location.href = '/admin.html';
     }
 
     const summarySection = document.getElementById('summarySection');
